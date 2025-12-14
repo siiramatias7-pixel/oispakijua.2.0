@@ -287,6 +287,18 @@ document.addEventListener("touchend",e=>{
     if(dy>30)move("down");else if(dy<-30)move("up");
   }
 });
+<div id="codeBox" style="display:none">
+  <p>Syötä kehittäjän koodi:</p>
+  <input id="developerCode" maxlength="4" placeholder="____">
+  <button onclick="enterCode()">OK</button>
+</div>
+function enterCode(){
+  const val = document.getElementById("developerCode").value;
+  if(val==="3767"){
+    rehab(true); // suorittaa katkaisuhoidon
+    document.getElementById("developerCode").value="";
+  }
+}
 
 // SALAINEN KEHITTÄJÄN KOODI 3767
 let codeInput="";
