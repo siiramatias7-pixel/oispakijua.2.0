@@ -2,272 +2,336 @@
 <html lang="fi">
 <head>
 <meta charset="UTF-8">
-<title>Kiljupeli2.0 🍶</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+<title>Kiljupeli 🍶</title>
+
 <style>
 body {
-  background: #000000;
-  color: #fff;
-  font-family: Arial, sans-serif;
-  text-align: center;
+  background:#222;
+  color:#fff;
+  font-family:Arial, sans-serif;
+  margin:0;
+  touch-action:none;
 }
 
-#score { font-size: 20px; margin: 10px; }
+#layout {
+  display:flex;
+  gap:30px;
+  padding:20px;
+  justify-content:center;
+  flex-wrap:wrap;
+}
+
+/* ===== TOP 10 ===== */
+#leaderboard {
+  width:220px;
+  background:#333;
+  padding:15px;
+  border-radius:10px;
+}
+
+#leaderboard h2 {
+  margin-top:0;
+  text-align:center;
+}
+
+#leaderboard ol {
+  padding-left:20px;
+}
+
+#leaderboard li {
+  margin-bottom:6px;
+}
+
+/* ===== GAME ===== */
+#gameArea {
+  text-align:center;
+}
+
+#score {
+  font-size:20px;
+  margin:10px;
+}
 
 #gameContainer {
-  position: relative;
-  width: 500px;
-  height: 500px;
-  margin: 20px auto;
+  width:320px;
+  height:320px;
+  position:relative;
+  margin:auto;
 }
 
 #game {
-  width: 100%;
-  height: 100%;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(4, 1fr);
-  gap: 5px;
-  background: #b66767;
-  padding: 5px;
-  border-radius: 10px;
-  position: relative;
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  grid-template-rows:repeat(4,1fr);
+  gap:5px;
+  background:#444;
+  padding:5px;
+  border-radius:10px;
+  height:100%;
 }
 
 .cell {
-  width: 100%;
-  height: 100%;
-  background: #c56363;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
-  position: relative;
+  background:#666;
+  border-radius:6px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
 }
 
 .cell img {
-  max-width: 90%;
-  max-height: 90%;
-  object-fit: contain;
-  pointer-events: none;
+  max-width:90%;
+  max-height:90%;
 }
 
 button {
-  margin: 5px;
-  padding: 10px 15px;
-  font-size: 16px;
-  cursor: pointer;
+  margin:6px;
+  padding:10px 15px;
+  font-size:16px;
+  cursor:pointer;
 }
 
+/* ===== GAME OVER ===== */
 #overlay {
-  position: absolute;
-  top:0;
-  left:0;
-  width: 100%;
-  height: 100%;
-  background: rgba(34,34,34,0.9);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  border-radius: 10px;
-  display: none;
+  position:absolute;
+  inset:0;
+  background:rgba(0,0,0,.9);
+  display:none;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  border-radius:10px;
 }
 
 #overlay input {
-  width: 80px;
-  padding: 5px;
-  margin: 5px;
-  font-size: 16px;
-  text-align: center;
+  padding:6px;
+  font-size:16px;
+  margin-top:8px;
+  width:120px;
+  text-align:center;
 }
 </style>
 </head>
+
 <body>
 
-<h1>🍶 Kiljupeli2.0 🍶</h1>
+<div id="layout">
 
-<div id="score">Pisteet: 0</div>
-
-<div id="gameContainer">
-  <div id="game"></div>
-  <div id="overlay">
-    <div style="font-size:24px; color:#ff4444; margin-bottom:10px;">💀 Peli loppui homo!</div>
-    <button id="newGameOverlay">🔄 Aloita uusi peli</button>
-    <div style="margin-top:10px;">
-      <input type="text" id="katkaisuCodeOverlay" maxlength="4" placeholder="Anna 4-numeroinen koodi">
-      <button id="applyCodeOverlay">💉 Käytä koodia</button>
-    </div>
+  <!-- TOP 10 -->
+  <div id="leaderboard">
+    <h2>🏆 Top 10 Kiljumestarit</h2>
+    <ol id="top10"></ol>
   </div>
-</div>
 
-<div style="margin-top:10px;">
-  <button id="katkaisu">🚑 kiljuaaketunkaa (-1000 pistettä)</button>
-</div>
+  <!-- GAME -->
+  <div id="gameArea">
+    <h1>🍶 Kiljupeli 🍶</h1>
+    <div id="score">Pisteet: 0</div>
 
-<p>Älä roiku kattokruunussa!!</p>
+    <div id="gameContainer">
+      <div id="game"></div>
+
+      <div id="overlay">
+        <h2>💀 Peli loppui</h2>
+
+        <div id="nameBox" style="display:none;">
+          <p>🎉 Uusi Kiljumestari!</p>
+          <input id="playerName" placeholder="Nimesi">
+          <button onclick="saveName()">Tallenna</button>
+        </div>
+
+        <button onclick="init()">🔄 Uusi peli</button>
+      </div>
+    </div>
+
+    <p>Nuolinäppäimet / WASD / Pyyhkäisy</p>
+  </div>
+
+</div>
 
 <audio id="sound64" src="sound64.mp3"></audio>
 
 <script>
+/* ===== CONFIG ===== */
 const SIZE = 4;
-let score = 0;
 let board = [];
-const WIN_CODE = "3767";
+let score = 0;
 
 const IMAGES = {
-  2: "images/2.png",
-  4: "images/4.png",
-  8: "images/8.png",
-  16: "images/16.png",
-  32: "images/32.png",
-  64: "images/64.png",
-  128: "images/128.png",
-  256: "images/256.png",
-  512: "images/512.png",
-  1024: "images/1024.png",
-  2048: "images/2048.png"
+  2:"images/2.png",
+  4:"images/4.png",
+  8:"images/8.png",
+  16:"images/16.png",
+  32:"images/32.png",
+  64:"images/64.png",
+  128:"images/128.png",
+  256:"images/256.png",
+  512:"images/512.png",
+  1024:"images/1024.png",
+  2048:"images/2048.png"
 };
 
-function init() {
+/* ===== INIT ===== */
+function init(){
+  board = Array(SIZE).fill().map(()=>Array(SIZE).fill(0));
   score = 0;
-  board = Array(SIZE).fill().map(() => Array(SIZE).fill(0));
   addTile();
   addTile();
-  draw();
   document.getElementById("overlay").style.display="none";
+  document.getElementById("nameBox").style.display="none";
+  draw();
 }
 
-function addTile() {
-  let empty = [];
-  for (let r=0;r<SIZE;r++)
-    for (let c=0;c<SIZE;c++)
-      if (board[r][c]===0) empty.push({r,c});
-  if (!empty.length) return;
-  let spot = empty[Math.floor(Math.random()*empty.length)];
-  board[spot.r][spot.c] = Math.random() < 0.9 ? 2 : 4;
-  if(board[spot.r][spot.c] === 64) playSound();
+/* ===== GAME LOGIC ===== */
+function addTile(){
+  let empty=[];
+  board.forEach((r,i)=>r.forEach((v,j)=>v===0&&empty.push([i,j])));
+  if(!empty.length) return;
+  let [r,c]=empty[Math.floor(Math.random()*empty.length)];
+  board[r][c]=Math.random()<0.9?2:4;
 }
 
-function playSound(){
-  const snd = document.getElementById("sound64");
-  snd.currentTime = 0;
-  snd.play();
-}
-
-function draw() {
-  const game = document.getElementById("game");
-  game.innerHTML = "";
-  for (let r=0;r<SIZE;r++) {
-    for (let c=0;c<SIZE;c++) {
-      const cell = document.createElement("div");
-      cell.className = "cell";
-      let val = board[r][c];
-      if (val !== 0) {
-        const img = document.createElement("img");
-        img.src = IMAGES[val];
-        cell.appendChild(img);
-      }
-      game.appendChild(cell);
+function draw(){
+  const g=document.getElementById("game");
+  g.innerHTML="";
+  board.flat().forEach(v=>{
+    const d=document.createElement("div");
+    d.className="cell";
+    if(v){
+      const img=document.createElement("img");
+      img.src=IMAGES[v];
+      d.appendChild(img);
     }
-  }
-  document.getElementById("score").textContent = "Pisteet: " + score;
-  document.getElementById("katkaisu").classList.toggle("hidden", score < 1000 || document.getElementById("overlay").style.display!=="none");
+    g.appendChild(d);
+  });
+  document.getElementById("score").innerText="Pisteet: "+score;
   checkGameOver();
 }
 
-function slide(row) {
-  row = row.filter(v => v);
-  for (let i=0;i<row.length-1;i++) {
-    if (row[i]===row[i+1]) {
+function slide(row){
+  row=row.filter(v=>v);
+  for(let i=0;i<row.length-1;i++){
+    if(row[i]===row[i+1]){
       row[i]*=2;
-      score += row[i];
-      row[i+1]=0;
+      score+=row[i];
       if(row[i]===64) playSound();
+      row[i+1]=0;
     }
   }
-  row = row.filter(v => v);
-  while (row.length < SIZE) row.push(0);
+  row=row.filter(v=>v);
+  while(row.length<SIZE) row.push(0);
   return row;
 }
 
-function rotate(times) {
-  for (let i=0;i<times;i++)
-    board = board[0].map((_,i) => board.map(r=>r[i]).reverse());
+function rotate(n){
+  while(n--) board=board[0].map((_,i)=>board.map(r=>r[i]).reverse());
 }
 
-function canMove() {
-  for (let r=0;r<SIZE;r++) {
-    for (let c=0;c<SIZE;c++) {
-      if (board[r][c]===0) return true;
-      if (c<SIZE-1 && board[r][c]===board[r][c+1]) return true;
-      if (r<SIZE-1 && board[r][c]===board[r+1][c]) return true;
-    }
-  }
-  return false;
-}
-
-function move(dir) {
-  if(document.getElementById("overlay").style.display==="flex") return;
-  let old = JSON.stringify(board);
-  if (dir==="up") rotate(3);
-  if (dir==="right") rotate(2);
-  if (dir==="down") rotate(1);
-  for (let i=0;i<SIZE;i++) board[i]=slide(board[i]);
-  if (dir==="up") rotate(1);
-  if (dir==="right") rotate(2);
-  if (dir==="down") rotate(3);
-  if (JSON.stringify(board)!==old) {
+function move(dir){
+  let old=JSON.stringify(board);
+  if(dir==="up") rotate(3);
+  if(dir==="right") rotate(2);
+  if(dir==="down") rotate(1);
+  board=board.map(slide);
+  if(dir==="up") rotate(1);
+  if(dir==="right") rotate(2);
+  if(dir==="down") rotate(3);
+  if(old!==JSON.stringify(board)){
     addTile();
     draw();
   }
 }
 
-document.addEventListener("keydown", e=>{
-  if (e.key==="ArrowLeft"||e.key==="a") move("left");
-  if (e.key==="ArrowRight"||e.key==="d") move("right");
-  if (e.key==="ArrowUp"||e.key==="w") move("up");
-  if (e.key==="ArrowDown"||e.key==="s") move("down");
-});
+function canMove(){
+  for(let i=0;i<SIZE;i++)
+    for(let j=0;j<SIZE;j++)
+      if(board[i][j]===0 ||
+         board[i][j]===board[i]?.[j+1] ||
+         board[i][j]===board[i+1]?.[j]) return true;
+  return false;
+}
 
-document.getElementById("katkaisu").onclick = ()=>{
-  if(score < 1000) return;
-  if(document.getElementById("overlay").style.display==="flex") return;
-  score -= 1000;
-  for(let r=0;r<SIZE;r++)
-    for(let c=0;c<SIZE;c++)
-      if(board[r][c]===2||board[r][c]===4||board[r][c]===8)
-        board[r][c]=0;
-  draw();
-};
-
-document.getElementById("newGameOverlay").onclick = ()=>init();
-
-document.getElementById("applyCodeOverlay").onclick = ()=>{
-  let code = document.getElementById("katkaisuCodeOverlay").value;
-  if(code===WIN_CODE){
-    if(score>=1000) score -= 1000;
-    for(let r=0;r<SIZE;r++)
-      for(let c=0;c<SIZE;c++)
-        if(board[r][c]===2||board[r][c]===4||board[r][c]===8)
-          board[r][c]=0;
-    draw();
-    document.getElementById("katkaisuCodeOverlay").value="";
-    document.getElementById("overlay").style.display="none";
-  } else {
-    alert("Väärä koodi!");
-  }
-};
-
+/* ===== GAME OVER ===== */
 function checkGameOver(){
   if(!canMove()){
     document.getElementById("overlay").style.display="flex";
-  } else {
-    document.getElementById("overlay").style.display="none";
+    if(isTop10(score)){
+      document.getElementById("nameBox").style.display="block";
+    }
   }
 }
 
+/* ===== TOP 10 ===== */
+function getTop10(){
+  return JSON.parse(localStorage.getItem("kiljuTop10")||"[]");
+}
+
+function isTop10(s){
+  let t=getTop10();
+  return t.length<10 || s>t[t.length-1].score;
+}
+
+function saveName(){
+  const name=document.getElementById("playerName").value||"Anon";
+  let t=getTop10();
+  t.push({name,score});
+  t.sort((a,b)=>b.score-a.score);
+  t=t.slice(0,10);
+  localStorage.setItem("kiljuTop10",JSON.stringify(t));
+  renderTop10();
+  document.getElementById("nameBox").style.display="none";
+}
+
+function renderTop10(){
+  const list=document.getElementById("top10");
+  list.innerHTML="";
+  getTop10().forEach(e=>{
+    const li=document.createElement("li");
+    li.textContent=`${e.name} – ${e.score}`;
+    list.appendChild(li);
+  });
+}
+
+/* ===== INPUT ===== */
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowLeft"||e.key==="a") move("left");
+  if(e.key==="ArrowRight"||e.key==="d") move("right");
+  if(e.key==="ArrowUp"||e.key==="w") move("up");
+  if(e.key==="ArrowDown"||e.key==="s") move("down");
+});
+
+/* ===== MOBILE SWIPE ===== */
+let sx=0, sy=0;
+document.addEventListener("touchstart",e=>{
+  const t=e.touches[0];
+  sx=t.clientX; sy=t.clientY;
+},{passive:true});
+
+document.addEventListener("touchend",e=>{
+  const t=e.changedTouches[0];
+  const dx=t.clientX-sx;
+  const dy=t.clientY-sy;
+  if(Math.abs(dx)>Math.abs(dy)){
+    if(dx>30) move("right");
+    else if(dx<-30) move("left");
+  } else {
+    if(dy>30) move("down");
+    else if(dy<-30) move("up");
+  }
+});
+
+/* ===== SOUND ===== */
+function playSound(){
+  const s=document.getElementById("sound64");
+  s.currentTime=0;
+  s.play();
+}
+
+/* ===== START ===== */
+renderTop10();
 init();
 </script>
+
 </body>
 </html>
