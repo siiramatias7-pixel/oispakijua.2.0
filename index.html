@@ -288,14 +288,18 @@ document.addEventListener("touchend",e=>{
   }
 });
 
-/* SALAINEN KEHITTÄJÄN KOODI 3767 */
+// SALAINEN KEHITTÄJÄN KOODI 3767
 let codeInput="";
 document.addEventListener("keydown",e=>{
   if(!/^[0-9]$/.test(e.key)) return;
   codeInput+=e.key;
   codeInput=codeInput.slice(-4);
   if(codeInput==="3767"){
-    if(!canMove()) rehab(true); // pelin lopussa
+    // Koodi toimii aina overlay-näytössä
+    const overlay=document.getElementById("overlay");
+    if(overlay.style.display==="flex"){ 
+      rehab(true); // pelin lopussa
+    }
     codeInput="";
   }
 });
