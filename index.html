@@ -2,9 +2,8 @@
 <html lang="fi">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Kiljupeli 🍶</title>
-
 <style>
 body{
   margin:0;
@@ -20,19 +19,13 @@ body{
   padding:20px;
   justify-content:center;
 }
-/* GAME AREA */
-#gameArea{text-align:center}
-#score{font-size:22px;margin-bottom:8px}
+#gameArea{text-align:center;}
+#score{font-size:22px;margin-bottom:8px;}
 #gameContainer{width:520px;height:520px;position:relative;margin:auto;}
 #gameBackground{
   position:absolute;
-  inset:0;# gameBackground{
-  background-image:url("background.jpg");
-}
-#gameBackground{
-  background-image:url("background.jpg");
-}
-
+  inset:0;
+  background-image:url("background.jpg"); /* Taustakuva tässä */
   background-size:cover;
   background-position:center;
   border-radius:12px;
@@ -70,15 +63,13 @@ button{
   cursor:pointer;
   margin:6px;
 }
-/* LEADERBOARD */
 #leaderboard{
   background:#333;
   padding:15px;
   border-radius:10px;
 }
-#leaderboard h2{text-align:center;margin-top:0}
-#leaderboard ol{padding-left:20px}
-/* OVERLAY */
+#leaderboard h2{text-align:center;margin-top:0;}
+#leaderboard ol{padding-left:20px;}
 #overlay{
   position:absolute;
   inset:0;
@@ -99,7 +90,6 @@ button{
 }
 </style>
 </head>
-
 <body>
 
 <div id="layout">
@@ -122,6 +112,11 @@ button{
         <input id="playerName" placeholder="Nimesi">
         <button onclick="saveName()">Tallenna</button>
       </div>
+      <div id="codeBox" style="display:block;">
+        <p>Syötä kehittäjän koodi:</p>
+        <input id="developerCode" maxlength="4" placeholder="____">
+        <button onclick="enterCode()">OK</button>
+      </div>
       <button onclick="init()">🔄 Uusi peli</button>
     </div>
   </div>
@@ -141,7 +136,6 @@ button{
 <script>
 const SIZE=4;
 let board=[],score=0;
-
 const IMAGES={
   2:"images/2.png",4:"images/4.png",8:"images/8.png",
   16:"images/16.png",32:"images/32.png",64:"images/64.png",
@@ -227,7 +221,6 @@ function canMove(){
 
 /* KATKAISUHOITO */
 function rehab(force=false){
-  // force=true → pelin lopussa (3767)
   if(!force){
     if(score<1000 || !canMove()) return;
     score-=1000;
@@ -292,34 +285,15 @@ document.addEventListener("touchend",e=>{
     if(dy>30)move("down");else if(dy<-30)move("up");
   }
 });
-<div id="codeBox" style="display:none">
-  <p>Syötä kehittäjän koodi:</p>
-  <input id="developerCode" maxlength="4" placeholder="____">
-  <button onclick="enterCode()">OK</button>
-</div>
+
+/* SALAINEN KEHITTÄJÄN KOODI 3767 (syötetään overlayissa) */
 function enterCode(){
-  const val = document.getElementById("developerCode").value;
+  const val=document.getElementById("developerCode").value;
   if(val==="3767"){
     rehab(true); // suorittaa katkaisuhoidon
     document.getElementById("developerCode").value="";
   }
 }
-
-// SALAINEN KEHITTÄJÄN KOODI 3767
-let codeInput="";
-document.addEventListener("keydown",e=>{
-  if(!/^[0-9]$/.test(e.key)) return;
-  codeInput+=e.key;
-  codeInput=codeInput.slice(-4);
-  if(codeInput==="3767"){
-    // Koodi toimii aina overlay-näytössä
-    const overlay=document.getElementById("overlay");
-    if(overlay.style.display==="flex"){ 
-      rehab(true); // pelin lopussa
-    }
-    codeInput="";
-  }
-});
 
 /* SOUND */
 function playSound(){const s=document.getElementById("sound64");s.currentTime=0;s.play();}
@@ -330,4 +304,3 @@ renderTop10();init();
 
 </body>
 </html>
-
