@@ -7,8 +7,10 @@
 <style>
 body{
   margin:0;
-  background: url("./background.jpg") no-repeat center center fixed;
+  background-image: url("./background.jpg"); /* taustakuva koko sivulla */
+  background-repeat: no-repeat;
   background-size: cover;
+  background-position: center center;
   font-family: Arial, sans-serif;
   color: #fff;
   touch-action: none;
@@ -32,7 +34,7 @@ body{
   gap:8px;
   padding:8px;
   height:100%;
-  background: rgba(0,0,0,0.55); /* läpinäkyvyys, jotta taustakuva näkyy */
+  background: rgba(0,0,0,0.55);
   border-radius:12px;
 }
 .cell{
@@ -103,11 +105,13 @@ button{
         <input id="playerName" placeholder="Nimesi">
         <button onclick="saveName()">Tallenna</button>
       </div>
-      <div id="codeBox" style="display:block;">
-        <p>Syötä kehittäjän koodi:</p>
+
+      <div id="codeBox" style="display:block">
+        <p>Syötä kehittäjän koodi (3767):</p>
         <input id="developerCode" maxlength="4" placeholder="____">
         <button onclick="enterCode()">OK</button>
       </div>
+
       <button onclick="init()">🔄 Uusi peli</button>
     </div>
   </div>
@@ -146,10 +150,10 @@ function init(){
 
 /* TILE */
 function addTile(){
-  let e=[];
-  board.forEach((r,i)=>r.forEach((v,j)=>v===0&&e.push([i,j])));
-  if(!e.length)return;
-  let [r,c]=e[Math.floor(Math.random()*e.length)];
+  let empty=[];
+  board.forEach((r,i)=>r.forEach((v,j)=>v===0&&empty.push([i,j])));
+  if(!empty.length)return;
+  let [r,c]=empty[Math.floor(Math.random()*empty.length)];
   board[r][c]=Math.random()<0.9?2:4;
 }
 
@@ -172,34 +176,34 @@ function draw(){
   checkGameOver();
 }
 
-function slide(r){
-  r=r.filter(v=>v);
-  for(let i=0;i<r.length-1;i++){
-    if(r[i]===r[i+1]){
-      r[i]*=2;score+=r[i];
-      if(r[i]===64) playSound();
-      r[i+1]=0;
+function slide(row){
+  row=row.filter(v=>v);
+  for(let i=0;i<row.length-1;i++){
+    if(row[i]===row[i+1]){
+      row[i]*=2;score+=row[i];
+      if(row[i]===64) playSound();
+      row[i+1]=0;
     }
   }
-  r=r.filter(v=>v);
-  while(r.length<SIZE)r.push(0);
-  return r;
+  row=row.filter(v=>v);
+  while(row.length<SIZE) row.push(0);
+  return row;
 }
 
 function rotate(n){
-  while(n--)board=board[0].map((_,i)=>board.map(r=>r[i]).reverse());
+  while(n--) board=board[0].map((_,i)=>board.map(r=>r[i]).reverse());
 }
 
 function move(d){
-  let o=JSON.stringify(board);
-  if(d==="up")rotate(3);
-  if(d==="right")rotate(2);
-  if(d==="down")rotate(1);
+  let old=JSON.stringify(board);
+  if(d==="up") rotate(3);
+  if(d==="right") rotate(2);
+  if(d==="down") rotate(1);
   board=board.map(slide);
-  if(d==="up")rotate(1);
-  if(d==="right")rotate(2);
-  if(d==="down")rotate(3);
-  if(o!==JSON.stringify(board)){addTile();draw();}
+  if(d==="up") rotate(1);
+  if(d==="right") rotate(2);
+  if(d==="down") rotate(3);
+  if(old!==JSON.stringify(board)){ addTile(); draw(); }
 }
 
 function canMove(){
@@ -216,11 +220,9 @@ function rehab(force=false){
     if(score<1000 || !canMove()) return;
     score-=1000;
   }
-  for(let i=0;i<SIZE;i++){
-    for(let j=0;j<SIZE;j++){
+  for(let i=0;i<SIZE;i++)
+    for(let j=0;j<SIZE;j++)
       if(board[i][j]<=8) board[i][j]=0;
-    }
-  }
   draw();
 }
 
@@ -256,28 +258,28 @@ function checkGameOver(){
 
 /* INPUT */
 document.addEventListener("keydown",e=>{
-  if(e.key==="ArrowLeft"||e.key==="a")move("left");
-  if(e.key==="ArrowRight"||e.key==="d")move("right");
-  if(e.key==="ArrowUp"||e.key==="w")move("up");
-  if(e.key==="ArrowDown"||e.key==="s")move("down");
+  if(e.key==="ArrowLeft"||e.key==="a") move("left");
+  if(e.key==="ArrowRight"||e.key==="d") move("right");
+  if(e.key==="ArrowUp"||e.key==="w") move("up");
+  if(e.key==="ArrowDown"||e.key==="s") move("down");
 });
 
 /* MOBILE SWIPE */
 let sx=0,sy=0;
 document.addEventListener("touchstart",e=>{
-  sx=e.touches[0].clientX;sy=e.touches[0].clientY;
+  sx=e.touches[0].clientX; sy=e.touches[0].clientY;
 },{passive:true});
 document.addEventListener("touchend",e=>{
   let dx=e.changedTouches[0].clientX-sx;
   let dy=e.changedTouches[0].clientY-sy;
   if(Math.abs(dx)>Math.abs(dy)){
-    if(dx>30)move("right");else if(dx<-30)move("left");
+    if(dx>30) move("right"); else if(dx<-30) move("left");
   } else {
-    if(dy>30)move("down");else if(dy<-30)move("up");
+    if(dy>30) move("down"); else if(dy<-30) move("up");
   }
 });
 
-/* SALAINEN KEHITTÄJÄN KOODI 3767 (syötetään overlayissa) */
+/* SALAINEN KEHITTÄJÄN KOODI 3767 */
 function enterCode(){
   const val=document.getElementById("developerCode").value;
   if(val==="3767"){
@@ -287,10 +289,10 @@ function enterCode(){
 }
 
 /* SOUND */
-function playSound(){const s=document.getElementById("sound64");s.currentTime=0;s.play();}
+function playSound(){const s=document.getElementById("sound64"); s.currentTime=0; s.play();}
 
 /* START */
-renderTop10();init();
+renderTop10(); init();
 </script>
 
 </body>
