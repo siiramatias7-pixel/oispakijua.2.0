@@ -7,10 +7,11 @@
 <style>
 body{
   margin:0;
-  background-image: url("./background.png"); /* taustakuva koko sivulla */
+  background-image: url("background.png"); 
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center center;
+  background-attachment: fixed;
   font-family: Arial, sans-serif;
   color: #fff;
   touch-action: none;
@@ -34,7 +35,7 @@ body{
   gap:8px;
   padding:8px;
   height:100%;
-  background: rgba(0,0,0,0.55);
+  background: rgba(0,0,0,0.55); 
   border-radius:12px;
 }
 .cell{
@@ -126,16 +127,16 @@ button{
 
 </div>
 
-<audio id="sound64" src="./sound64.mp3"></audio>
+<audio id="sound64" src="sound64.mp3"></audio>
 
 <script>
 const SIZE=4;
 let board=[],score=0;
 const IMAGES={
-  2:"./images/2.png",4:"./images/4.png",8:"./images/8.png",
-  16:"./images/16.png",32:"./images/32.png",64:"./images/64.png",
-  128:"./images/128.png",256:"./images/256.png",
-  512:"./images/512.png",1024:"./images/1024.png"
+  2:"images/2.png",4:"images/4.png",8:"images/8.png",
+  16:"images/16.png",32:"images/32.png",64:"images/64.png",
+  128:"images/128.png",256:"images/256.png",
+  512:"images/512.png",1024:"images/1024.png"
 };
 
 /* INIT */
@@ -152,7 +153,7 @@ function init(){
 function addTile(){
   let empty=[];
   board.forEach((r,i)=>r.forEach((v,j)=>v===0&&empty.push([i,j])));
-  if(!empty.length)return;
+  if(!empty.length) return;
   let [r,c]=empty[Math.floor(Math.random()*empty.length)];
   board[r][c]=Math.random()<0.9?2:4;
 }
@@ -285,6 +286,7 @@ function enterCode(){
   if(val==="3767"){
     rehab(true); // suorittaa katkaisuhoidon
     document.getElementById("developerCode").value="";
+    document.getElementById("overlay").style.display="none"; // piilota overlay heti
   }
 }
 
