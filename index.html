@@ -4,323 +4,26 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🍶 Kiljupeli2.0 🍶</title>
+
 <style>
+/* ===== PERUS ===== */
 body{
   margin:0;
-  background-image: url("background.png"); 
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center center;
-  background-attachment: fixed;
-  font-family: Arial, sans-serif;
-  color: #fff;
-  touch-action: none;
+  background-image:url("background.png");
+  background-repeat:no-repeat;
+  background-size:cover;
+  background-position:center;
+  background-attachment:fixed;
+  font-family:Arial, sans-serif;
+  color:#fff;
+  touch-action:none;
 }
-#layout{
-  display:grid;
-  grid-template-columns:auto 520px 280px;
-  gap:30px;
-  padding:20px;
-  justify-content:center;
-}
-#gameArea{text-align:center;}
-#score{font-size:22px;margin-bottom:8px;}
-#gameContainer{width:520px;height:520px;position:relative;margin:auto;}
-#game{
-  position:relative;
-  z-index:1;
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  grid-template-rows:repeat(4,1fr);
-  gap:8px;
-  padding:8px;
-  height:100%;
-  background: rgba(0,0,0,0.55); 
-  border-radius:12px;
-}
-.cell{
-  background:#666;
-  border-radius:8px;
-  aspect-ratio:1/1;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  overflow:hidden;
-}
-.cell img{
-  width:100%;
-  height:100%;
-  object-fit:contain;
-}
+
 button{
   padding:8px 14px;
   font-size:16px;
   cursor:pointer;
   margin:6px;
-}
-#leaderboard{
-  background:#333;
-  padding:15px;
-  border-radius:10px;
-}
-#leaderboard h2{text-align:center;margin-top:0;}
-#leaderboard ol{padding-left:20px;}
-#overlay{
-  position:absolute;
-  inset:0;
-  background:rgba(0,0,0,0.9);
-  display:none;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-  border-radius:12px;
-  z-index:3;
-}
-#overlay input{
-  padding:6px;
-  font-size:16px;
-  margin-top:6px;
-  width:160px;
-  text-align:center;
-}
-</style>
-</head>
-<body>
-
-<div id="layout">
-
-<div></div>
-
-<div id="gameArea">
-  <h1>🍶 Kiljupeli 🍶</h1>
-  <div id="score">Pisteet: 0</div>
-  <button id="rehabBtn" onclick="rehab()" style="display:none">🩺 Katkaisuhoito (-1000)</button>
-
-  <div id="gameContainer">
-    <div id="game"></div>
-
-    <div id="overlay">
-      <h2>💀 Peli loppui</h2>
-      <div id="nameBox" style="display:none">
-        <p>🎉 Uusi Top 10!</p>
-        <input id="playerName" placeholder="Nimesi">
-        <button onclick="saveName()">Tallenna</button>
-      </div>
-
-      <div id="codeBox" style="display:block">
-        <p>Syötä kehittäjän koodi:</p>
-        <input id="developerCode" maxlength="4" placeholder="____">
-        <button onclick="enterCode()">OK</button>
-      </div>
-
-      <button onclick="init()">🔄 Uusi peli</button>
-    </div>
-  </div>
-
-  <p>Nuolinäppäimet / WASD / Pyyhkäisy</p>
-</div>
-
-<div id="leaderboard">
-  <h2>#Top 10 omat suoritukset</h2>
-  <ol id="top10"></ol>
-</div>
-
-</div>
-
-<audio id="sound64" src="sound64.mp3"></audio>
-
-<script>
-const SIZE=4;
-let board=[],score=0;
-const IMAGES={
-  2:"images/2.png",
-  4:"images/4.png",
-  8:"images/8.png",
-  16:"images/16.png",
-  32:"images/32.png",
-  64:"images/64.png",
-  128:"images/128.png",
-  256:"images/256.png",
-  512:"images/512.png",
-  1024:"images/1024.png",
-  2048:"images/2048.png" // uusi kuva lisätty
-};
-
-/* INIT */
-function init(){
-  board=Array(SIZE).fill().map(()=>Array(SIZE).fill(0));
-  score=0;
-  addTile();addTile();
-  document.getElementById("overlay").style.display="none";
-  document.getElementById("nameBox").style.display="none";
-  draw();
-}
-
-/* TILE */
-function addTile(){
-  let empty=[];
-  board.forEach((r,i)=>r.forEach((v,j)=>v===0&&empty.push([i,j])));
-  if(!empty.length) return;
-  let [r,c]=empty[Math.floor(Math.random()*empty.length)];
-  board[r][c]=Math.random()<0.9?2:4;
-}
-
-function draw(){
-  const g=document.getElementById("game");
-  g.innerHTML="";
-  board.flat().forEach(v=>{
-    const d=document.createElement("div");
-    d.className="cell";
-    if(v){
-      const i=document.createElement("img");
-      i.src=IMAGES[v];
-      d.appendChild(i);
-    }
-    g.appendChild(d);
-  });
-  document.getElementById("score").innerText="Pisteet: "+score;
-  document.getElementById("rehabBtn").style.display=
-    score>=1000 && canMove() ? "inline-block":"none";
-  checkGameOver();
-}
-
-function slide(row){
-  row=row.filter(v=>v);
-  for(let i=0;i<row.length-1;i++){
-    if(row[i]===row[i+1]){
-      row[i]*=2;score+=row[i];
-      if(row[i]===64) playSound();
-      row[i+1]=0;
-    }
-  }
-  row=row.filter(v=>v);
-  while(row.length<SIZE) row.push(0);
-  return row;
-}
-
-function rotate(n){
-  while(n--) board=board[0].map((_,i)=>board.map(r=>r[i]).reverse());
-}
-
-function move(d){
-  let old=JSON.stringify(board);
-  if(d==="up") rotate(3);
-  if(d==="right") rotate(2);
-  if(d==="down") rotate(1);
-  board=board.map(slide);
-  if(d==="up") rotate(1);
-  if(d==="right") rotate(2);
-  if(d==="down") rotate(3);
-  if(old!==JSON.stringify(board)){ addTile(); draw(); }
-}
-
-function canMove(){
-  for(let i=0;i<SIZE;i++)
-    for(let j=0;j<SIZE;j++)
-      if(board[i][j]===0||board[i][j]===board[i]?.[j+1]||board[i][j]===board[i+1]?.[j])
-        return true;
-  return false;
-}
-
-/* KATKAISUHOITO */
-function rehab(force=false){
-  if(!force){
-    if(score<1000 || !canMove()) return;
-    score-=1000;
-  }
-  for(let i=0;i<SIZE;i++)
-    for(let j=0;j<SIZE;j++)
-      if(board[i][j]<=8) board[i][j]=0;
-  draw();
-}
-
-/* TOP 10 */
-function getTop10(){return JSON.parse(localStorage.getItem("kiljuTop10")||"[]");}
-function isTop10(s){let t=getTop10();return t.length<10||s>t[t.length-1].score;}
-function saveName(){
-  let n=document.getElementById("playerName").value||"Anon";
-  let t=getTop10();
-  t.push({name:n,score});
-  t.sort((a,b)=>b.score-a.score);
-  localStorage.setItem("kiljuTop10",JSON.stringify(t.slice(0,10)));
-  renderTop10();
-  document.getElementById("nameBox").style.display="none";
-}
-function renderTop10(){
-  const l=document.getElementById("top10");
-  l.innerHTML="";
-  getTop10().forEach(e=>{
-    const li=document.createElement("li");
-    li.textContent=`${e.name} – ${e.score}`;
-    l.appendChild(li);
-  });
-}
-
-/* GAME OVER */
-function checkGameOver(){
-  if(!canMove()){
-    document.getElementById("overlay").style.display="flex";
-    if(isTop10(score)) document.getElementById("nameBox").style.display="block";
-  }
-}
-
-/* INPUT */
-document.addEventListener("keydown",e=>{
-  if(e.key==="ArrowLeft"||e.key==="a") move("left");
-  if(e.key==="ArrowRight"||e.key==="d") move("right");
-  if(e.key==="ArrowUp"||e.key==="w") move("up");
-  if(e.key==="ArrowDown"||e.key==="s") move("down");
-});
-
-/* MOBILE SWIPE */
-let sx=0,sy=0;
-document.addEventListener("touchstart",e=>{
-  sx=e.touches[0].clientX; sy=e.touches[0].clientY;
-},{passive:true});
-document.addEventListener("touchend",e=>{
-  let dx=e.changedTouches[0].clientX-sx;
-  let dy=e.changedTouches[0].clientY-sy;
-  if(Math.abs(dx)>Math.abs(dy)){
-    if(dx>30) move("right"); else if(dx<-30) move("left");
-  } else {
-    if(dy>30) move("down"); else if(dy<-30) move("up");
-  }
-});
-
-/* SALAINEN KEHITTÄJÄN KOODI 3767 */
-function enterCode(){
-  const val=document.getElementById("developerCode").value;
-  if(val==="6767"){
-    rehab(true);
-    document.getElementById("developerCode").value="";
-    document.getElementById("overlay").style.display="none";
-  }
-}
-
-/* SOUND */
-function playSound(){const s=document.getElementById("sound64"); s.currentTime=0; s.play();}
-
-/* START */
-renderTop10(); init();
-</script>
-  <!DOCTYPE html>
-<html lang="fi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kiljupeli 🍶</title>
-
-<style>
-body{
-  margin:0;
-  background-image: url("background.jpg"); 
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center center;
-  background-attachment: fixed;
-  font-family: Arial, sans-serif;
-  color: #fff;
-  touch-action: none;
 }
 
 /* ===== DESKTOP LAYOUT ===== */
@@ -343,15 +46,13 @@ body{
 }
 
 #game{
-  position:relative;
-  z-index:1;
   display:grid;
   grid-template-columns:repeat(4,1fr);
   grid-template-rows:repeat(4,1fr);
   gap:8px;
   padding:8px;
   height:100%;
-  background: rgba(0,0,0,0.55); 
+  background:rgba(0,0,0,0.55);
   border-radius:12px;
 }
 
@@ -371,22 +72,7 @@ body{
   object-fit:contain;
 }
 
-button{
-  padding:8px 14px;
-  font-size:16px;
-  cursor:pointer;
-  margin:6px;
-}
-
-#leaderboard{
-  background:#333;
-  padding:15px;
-  border-radius:10px;
-}
-
-#leaderboard h2{text-align:center;margin-top:0;}
-#leaderboard ol{padding-left:20px;}
-
+/* ===== OVERLAY ===== */
 #overlay{
   position:absolute;
   inset:0;
@@ -396,7 +82,7 @@ button{
   align-items:center;
   justify-content:center;
   border-radius:12px;
-  z-index:3;
+  z-index:5;
 }
 
 #overlay input{
@@ -407,10 +93,26 @@ button{
   text-align:center;
 }
 
+/* ===== TOP 10 ===== */
+#leaderboard{
+  background:#333;
+  padding:15px;
+  border-radius:10px;
+}
+
+#leaderboard h2{
+  text-align:center;
+  margin-top:0;
+}
+
+#leaderboard ol{
+  padding-left:20px;
+}
+
 /* ================================================= */
 /* 📱 MOBIILIKORJAUS – EI RIKO DESKTOPIA */
 /* ================================================= */
-@media (max-width: 900px){
+@media (max-width:900px){
 
   #layout{
     grid-template-columns:1fr;
@@ -426,27 +128,241 @@ button{
   }
 
   #leaderboard{
-    margin-top:15px;
     order:2;
+    margin-top:15px;
   }
 
-  h1{
-    font-size:22px;
-  }
-
-  #score{
-    font-size:18px;
-  }
+  h1{font-size:22px;}
+  #score{font-size:18px;}
 }
 </style>
 </head>
 
 <body>
 
-<!-- ===== HTML & JS JÄTETTY TÄYSIN KOSKEMATTOMAKSI ===== -->
-<!-- (kaikki seuraava on täsmälleen sama kuin sinun) -->
+<div id="layout">
 
-<!-- … HTML & JS jatkuu identtisenä … -->
+<div></div>
 
+<div id="gameArea">
+  <h1>🍶 Kiljupeli 🍶</h1>
+  <div id="score">Pisteet: 0</div>
+  <button id="rehabBtn" onclick="rehab()" style="display:none">
+    🩺 Katkaisuhoito (-1000)
+  </button>
 
+  <div id="gameContainer">
+    <div id="game"></div>
 
+    <div id="overlay">
+      <h2>💀 Peli loppui</h2>
+
+      <div id="nameBox" style="display:none">
+        <p>🎉 Uusi Top 10!</p>
+        <input id="playerName" placeholder="Nimesi">
+        <button onclick="saveName()">Tallenna</button>
+      </div>
+
+      <p>Syötä kehittäjän koodi</p>
+      <input id="developerCode" maxlength="4" placeholder="____">
+      <button onclick="enterCode()">OK</button>
+
+      <button onclick="init()">🔄 Uusi peli</button>
+    </div>
+  </div>
+
+  <p>Nuolinäppäimet / WASD / Pyyhkäisy</p>
+</div>
+
+<div id="leaderboard">
+  <h2>#Top 10 omat suoritukset</h2>
+  <ol id="top10"></ol>
+</div>
+
+</div>
+
+<audio id="sound64" src="sound64.mp3"></audio>
+
+<script>
+const SIZE=4;
+let board=[],score=0;
+
+const IMAGES={
+  2:"images/2.png",4:"images/4.png",8:"images/8.png",
+  16:"images/16.png",32:"images/32.png",64:"images/64.png",
+  128:"images/128.png",256:"images/256.png",
+  512:"images/512.png",1024:"images/1024.png",2048:"images/2048.png"
+};
+
+/* INIT */
+function init(){
+  board=Array(SIZE).fill().map(()=>Array(SIZE).fill(0));
+  score=0;
+  addTile(); addTile();
+  overlay.style.display="none";
+  nameBox.style.display="none";
+  draw();
+}
+
+/* TILE */
+function addTile(){
+  let empty=[];
+  board.forEach((r,i)=>r.forEach((v,j)=>v===0&&empty.push([i,j])));
+  if(!empty.length) return;
+  let [r,c]=empty[Math.floor(Math.random()*empty.length)];
+  board[r][c]=Math.random()<0.9?2:4;
+}
+
+function draw(){
+  game.innerHTML="";
+  board.flat().forEach(v=>{
+    const d=document.createElement("div");
+    d.className="cell";
+    if(v){
+      const i=document.createElement("img");
+      i.src=IMAGES[v];
+      d.appendChild(i);
+      if(v===64) playSound();
+    }
+    game.appendChild(d);
+  });
+  scoreEl.innerText="Pisteet: "+score;
+  rehabBtn.style.display=score>=1000&&canMove()?"inline-block":"none";
+  checkGameOver();
+}
+
+function slide(r){
+  r=r.filter(v=>v);
+  for(let i=0;i<r.length-1;i++){
+    if(r[i]===r[i+1]){
+      r[i]*=2; score+=r[i]; r[i+1]=0;
+    }
+  }
+  r=r.filter(v=>v);
+  while(r.length<SIZE) r.push(0);
+  return r;
+}
+
+function rotate(n){
+  while(n--) board=board[0].map((_,i)=>board.map(r=>r[i]).reverse());
+}
+
+function move(d){
+  let old=JSON.stringify(board);
+  if(d==="up") rotate(3);
+  if(d==="right") rotate(2);
+  if(d==="down") rotate(1);
+  board=board.map(slide);
+  if(d==="up") rotate(1);
+  if(d==="right") rotate(2);
+  if(d==="down") rotate(3);
+  if(old!==JSON.stringify(board)){ addTile(); draw(); }
+}
+
+function canMove(){
+  for(let i=0;i<SIZE;i++)
+    for(let j=0;j<SIZE;j++)
+      if(board[i][j]===0||
+         board[i][j]===board[i]?.[j+1]||
+         board[i][j]===board[i+1]?.[j]) return true;
+  return false;
+}
+
+/* KATKAISUHOITO */
+function rehab(force=false){
+  if(!force){ if(score<1000||!canMove())return; score-=1000; }
+  for(let i=0;i<SIZE;i++)
+    for(let j=0;j<SIZE;j++)
+      if(board[i][j]<=8) board[i][j]=0;
+  draw();
+}
+
+/* TOP 10 */
+function getTop10(){
+  return JSON.parse(localStorage.getItem("kiljuTop10")||"[]");
+}
+function isTop10(s){
+  let t=getTop10();
+  return t.length<10||s>t[t.length-1].score;
+}
+function saveName(){
+  let n=playerName.value||"Anon";
+  let t=getTop10();
+  t.push({name:n,score});
+  t.sort((a,b)=>b.score-a.score);
+  localStorage.setItem("kiljuTop10",JSON.stringify(t.slice(0,10)));
+  renderTop10();
+  nameBox.style.display="none";
+}
+function renderTop10(){
+  top10.innerHTML="";
+  getTop10().forEach(e=>{
+    const li=document.createElement("li");
+    li.textContent=`${e.name} – ${e.score}`;
+    top10.appendChild(li);
+  });
+}
+
+/* GAME OVER */
+function checkGameOver(){
+  if(!canMove()){
+    overlay.style.display="flex";
+    if(isTop10(score)) nameBox.style.display="block";
+  }
+}
+
+/* INPUT */
+document.addEventListener("keydown",e=>{
+  if(e.key==="ArrowLeft"||e.key==="a") move("left");
+  if(e.key==="ArrowRight"||e.key==="d") move("right");
+  if(e.key==="ArrowUp"||e.key==="w") move("up");
+  if(e.key==="ArrowDown"||e.key==="s") move("down");
+});
+
+/* MOBILE */
+let sx=0,sy=0;
+document.addEventListener("touchstart",e=>{
+  sx=e.touches[0].clientX; sy=e.touches[0].clientY;
+},{passive:true});
+document.addEventListener("touchend",e=>{
+  let dx=e.changedTouches[0].clientX-sx;
+  let dy=e.changedTouches[0].clientY-sy;
+  if(Math.abs(dx)>Math.abs(dy)){
+    if(dx>30) move("right"); else if(dx<-30) move("left");
+  }else{
+    if(dy>30) move("down"); else if(dy<-30) move("up");
+  }
+});
+
+/* DEVCODE */
+function enterCode(){
+  if(developerCode.value==="6767"){
+    rehab(true);
+    overlay.style.display="none";
+    developerCode.value="";
+  }
+}
+
+/* SOUND */
+function playSound(){
+  sound64.currentTime=0;
+  sound64.play();
+}
+
+/* START */
+const game=document.getElementById("game");
+const scoreEl=document.getElementById("score");
+const overlay=document.getElementById("overlay");
+const rehabBtn=document.getElementById("rehabBtn");
+const nameBox=document.getElementById("nameBox");
+const playerName=document.getElementById("playerName");
+const developerCode=document.getElementById("developerCode");
+const top10=document.getElementById("top10");
+const sound64=document.getElementById("sound64");
+
+renderTop10();
+init();
+</script>
+
+</body>
+</html>
